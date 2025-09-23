@@ -1,0 +1,91 @@
+[info]
+name = "Test Development Setup"
+version = "0.0.1"
+
+[[pre]]
+name = "Check system readiness"
+cmd = "echo"
+args = ["System check complete - ready for setup"]
+condition = "test -d /usr/local"
+
+[[pre]]
+name = "Create temp directory"
+cmd = "mkdir"
+args = ["-p", "/tmp/setup-test"]
+
+[[step]]
+name = "install_tools"
+cmd = "echo"
+args = ["git", "neovim", "bat", "rustup"]
+multi_run = true
+
+[[step]]
+name = "install_casks"
+cmd = "echo"
+args = ["Installing cask:", "ghostty", "iterm2"]
+multi_run = false
+
+[[step]]
+name = "clone_repo"
+cmd = "echo"
+args = ["Cloning dotfiles to ~/.dotfiles"]
+
+[[step]]
+name = "setup_symlinks"
+cmd = "echo"
+args = ["Creating symlinks with stow"]
+
+[[step]]
+name = "build_project"
+cmd = "echo"
+args = ["Building in custom directory"]
+working_dir = "/tmp/setup-test"
+
+[[step]]
+name = "compile_tool"
+cmd = "echo"
+args = ["Compiling custom tool"]
+working_dir = "/tmp/setup-test"
+
+[[post]]
+name = "Initialize Rust toolchain"
+cmd = "echo"
+args = ["rustup-init", "-y"]
+requires = ["rustup"]
+
+[[post]]
+name = "Install Node via NVM"
+cmd = "echo"
+args = ["nvm install node"]
+requires = ["nvm"]
+requires_files = ["~/.nvm/nvm.sh"]
+
+[[post]]
+name = "Build bat cache"
+cmd = "echo"
+args = ["bat cache --build"]
+requires = ["bat"]
+requires_files = ["~/.config/bat/config"]
+
+[[custom]]
+name = "Setup Custom Compiler"
+description = "Install and configure a custom compiler toolchain"
+requires = ["git", "llvm"]
+notes = [
+  "Ensure LLVM paths are configured in your shell:",
+  "export PATH=\"/usr/local/opt/llvm/bin:$PATH\"",
+  "This will clone and build the compiler from source",
+]
+prompt = "Have you configured LLVM paths and are ready to install the compiler?"
+steps = ["build_project", "compile_tool"]
+
+[[custom]]
+name = "Configure Development Environment"
+description = "Set up IDE and development tools"
+requires = ["neovim"]
+notes = [
+  "This will configure your development environment",
+  "Make sure your config files are in place",
+]
+prompt = "Ready to configure your development environment?"
+steps = ["setup_symlinks"]
