@@ -2,74 +2,91 @@
 name = "Test Development Setup"
 version = "0.0.1"
 
-[[pre]]
+[setup]
+pre = ["check_system_ready", "create_temp_dir"]
+main = ["install_casks"]
+post = ["init_rust", "install_node"]
+
+[[action]]
 name = "Check system readiness"
+id = "check_system_ready"
 cmd = "echo"
 args = ["System check complete - ready for setup"]
 condition = "test -d /usr/local"
 
-[[pre]]
+[[action]]
 name = "Create temp directory"
+id = "create_temp_dir"
 cmd = "mkdir"
 args = ["-p", "/tmp/setup-test"]
 
-[[step]]
-name = "install_tools"
+[[action]]
+name = "Install Homebrew Casks"
+id = "install_casks"
 cmd = "echo"
-args = ["git", "neovim", "bat", "rustup"]
+args = ["a", "b", "c", "def", "ghi", "jkl"]
 multi_run = true
 
-[[step]]
-name = "install_casks"
-cmd = "echo"
-args = ["Installing cask:", "ghostty", "iterm2"]
-multi_run = false
-
-[[step]]
-name = "clone_repo"
-cmd = "echo"
-args = ["Cloning dotfiles to ~/.dotfiles"]
-
-[[step]]
-name = "setup_symlinks"
-cmd = "echo"
-args = ["Creating symlinks with stow"]
-
-[[step]]
-name = "build_project"
-cmd = "echo"
-args = ["Building in custom directory"]
-working_dir = "/tmp/setup-test"
-
-[[step]]
-name = "compile_tool"
-cmd = "echo"
-args = ["Compiling custom tool"]
-working_dir = "/tmp/setup-test"
-
-[[post]]
+[[action]]
 name = "Initialize Rust toolchain"
+id = "init_rust"
 cmd = "echo"
 args = ["rustup-init", "-y"]
 requires = ["rustup"]
 
-[[post]]
+[[action]]
 name = "Install Node via NVM"
+id = "install_node"
 cmd = "echo"
 args = ["nvm install node"]
 requires = ["nvm"]
 requires_files = ["~/.nvm/nvm.sh"]
 
-[[post]]
+[[action]]
 name = "Build bat cache"
+id = "build_bat_cache"
 cmd = "echo"
 args = ["bat cache --build"]
 requires = ["bat"]
 requires_files = ["~/.config/bat/config"]
 
-[[custom]]
-name = "Setup Custom Compiler"
-description = "Install and configure a custom compiler toolchain"
+[[action]]
+name = "Install essential tools"
+id = "install_tools"
+cmd = "echo"
+args = ["git", "neovim", "bat", "rustup"]
+multi_run = true
+
+[[action]]
+name = "Clone Git repo"
+id = "clone_repo"
+cmd = "echo"
+args = ["Cloning dotfiles to ~/.dotfiles"]
+
+[[action]]
+name = "Create Symlinks to..."
+id = "setup_symlinks"
+cmd = "echo"
+args = ["Creating symlinks with stow"]
+
+[[action]]
+name = "Build some project"
+id = "build_project"
+cmd = "echo"
+args = ["Building in custom directory"]
+working_dir = "/tmp/setup-test"
+
+[[action]]
+name = "Compile some tool"
+id = "compile_tool"
+cmd = "echo"
+args = ["Compiling custom tool"]
+working_dir = "/tmp/setup-test"
+
+[[workflow]]
+id = "setup_some_compiler"
+name = "Setup Some Compiler"
+description = "Install and configure some compiler toolchain"
 requires = ["git", "llvm"]
 notes = [
   "Ensure LLVM paths are configured in your shell:",
@@ -77,9 +94,10 @@ notes = [
   "This will clone and build the compiler from source",
 ]
 prompt = "Have you configured LLVM paths and are ready to install the compiler?"
-steps = ["build_project", "compile_tool"]
+actions = ["build_project", "compile_tool"]
 
-[[custom]]
+[[workflow]]
+id = "configure_dev_env"
 name = "Configure Development Environment"
 description = "Set up IDE and development tools"
 requires = ["neovim"]
@@ -88,4 +106,4 @@ notes = [
   "Make sure your config files are in place",
 ]
 prompt = "Ready to configure your development environment?"
-steps = ["setup_symlinks"]
+actions = ["setup_symlinks"]

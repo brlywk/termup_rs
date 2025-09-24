@@ -12,7 +12,8 @@ pub struct Cli {
         short = 'c',
         long = "config",
         default_value = "config.toml",
-        help = "Config file to parse."
+        help = "Config file to parse.",
+        global = true
     )]
     pub config_file: PathBuf,
 
