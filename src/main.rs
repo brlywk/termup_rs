@@ -1,6 +1,7 @@
 use crate::{
     cli::{
-        Cli, Commands, config::config_command_run, custom::custom_command_run, run::run_command_run,
+        Cli, Commands, config::config_command_run, run::run_command_run,
+        workflow::workflow_command_run,
     },
     config::Config,
 };
@@ -9,6 +10,7 @@ use clap::Parser;
 
 mod cli;
 mod config;
+mod execute;
 mod print;
 
 fn main() -> Result<()> {
@@ -18,7 +20,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Run => run_command_run(&config)?,
-        Commands::Custom => custom_command_run(&config)?,
+        Commands::Workflow => workflow_command_run(&config)?,
         Commands::Config => config_command_run(&config)?,
     }
 

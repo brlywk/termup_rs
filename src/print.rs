@@ -90,17 +90,14 @@ where
 /// # Example
 /// ```rust
 /// use print::{pretty_list, PadAlign};
-/// use colored::Colorize;
-///
-/// let name = "My Project";
-/// let version = "1.0";
 ///
 /// let lines = pretty_list![
-///     ("Name", name.green()),
-///     ("Version", version),
+///     ("Name", "Arthur Dent"),
+///     ("Answer", 42),
+///     ("Towel", true),
 /// ];
 ///
-/// assert!(lines.pad_align_default().contains("My Project"));
+/// println!("{}", lines.pad_align(5));
 /// ```
 #[macro_export]
 macro_rules! pretty_list {

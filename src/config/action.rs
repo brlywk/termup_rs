@@ -1,8 +1,14 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    io::Stderr,
+    process::{Command, Stdio},
+};
 
+use anyhow::{Context, bail};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use crate::{config::constants::*, pretty_list, print::*};
+use crate::{config::constants::*, execute::Executable, pretty_list, print::*};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Action {
@@ -43,7 +49,11 @@ impl Display for Action {
             ),
             (
                 KEY_MULTI_RUN,
-                styled_option(self.multi_run, |s| style_default(s), || style_none())
+                if let Some(true) = self.multi_run {
+                    "Yes"
+                } else {
+                    "No"
+                }
             ),
             (
                 KEY_COND,
@@ -77,5 +87,56 @@ impl Display for Action {
         ];
 
         writeln!(f, "{}", lines.pad_align_default())
+    }
+}
+
+impl Executable for Action {
+    fn execute(&self) -> anyhow::Result<()> {
+        println!(
+            "[{}] {} ----",
+            "Running Action".bright_cyan(),
+            self.name.bold()
+        );
+
+        // collect and prepare all commands to actually run:
+        // when multi_run is set to true, every arg should spawn it's own command
+        let cmds_to_run: Vec<String> = if self.multi_run.unwrap_or(false) {
+            self.args
+                .iter()
+                .map(|arg| format!("{} {}", self.cmd, arg))
+                .collect()
+        } else {
+            let args = self.args.join(" ");
+            vec![format!("{} {}", self.cmd, args)]
+        };
+
+        // execute each command
+        for cmd_str in cmds_to_run {
+            println!("{}", cmd_str.as_str().dimmed());
+
+            let mut cmd = Command::new("sh");
+            cmd.arg("-c").arg(&cmd_str);
+
+            if let Some(dir) = &self.working_dir {
+                cmd.current_dir(dir);
+            }
+
+            // repipe the pipes
+            cmd.stdout(Stdio::inherit());
+            cmd.stderr(Stdio::inherit());
+
+            // run cmd, run!
+            let status = cmd
+                .spawn()
+                .with_context(|| format!("failed to spawn command: {}", cmd_str))?
+                .wait()
+                .with_context(|| "failed to wait for command to finish")?;
+
+            if !status.success() {
+                bail!("Action {} failed with status: {}", &self.name, status)
+            }
+        }
+
+        Ok(())
     }
 }

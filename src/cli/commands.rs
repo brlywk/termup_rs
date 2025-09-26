@@ -25,8 +25,8 @@ pub struct Cli {
 pub enum Commands {
     /// Run terminal setup
     Run,
-    /// Run custom / semi-manual setup steps
-    Custom,
+    /// Run a manual workflow
+    Workflow,
     /// Pretty-print loaded config file
     Config,
 }

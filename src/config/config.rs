@@ -34,7 +34,7 @@ impl Display for Config {
         writeln!(f, "{}\n{}\n", "Info".blue(), self.info)?;
 
         // setup block
-        writeln!(f, "{}\n{}\n", "Setup".blue(), self.setup)?;
+        writeln!(f, "{}\n{}", "Setup".blue(), self.setup)?;
 
         // actions
         if !self.actions.is_empty() {
@@ -42,7 +42,6 @@ impl Display for Config {
             for s in self.actions.iter() {
                 writeln!(f, "{}", s)?;
             }
-            writeln!(f)?;
         }
 
         // workflows
@@ -51,7 +50,6 @@ impl Display for Config {
             for p in self.workflows.iter() {
                 writeln!(f, "{}", p)?;
             }
-            writeln!(f)?;
         }
 
         Ok(())
