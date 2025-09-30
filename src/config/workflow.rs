@@ -2,7 +2,14 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{config::constants::*, pretty_list, print::PadAlign};
+use crate::{
+    config::{
+        style_default, style_none, vec_multiline_split, KEY_DESCRIPTION, KEY_ID, KEY_NAME,
+        KEY_NOTES, KEY_PROMPT, KEY_REQUIRES, KEY_STEPS,
+    },
+    pretty_list,
+    print::PadAlign,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Workflow {
@@ -29,20 +36,23 @@ impl Display for Workflow {
                 KEY_REQUIRES,
                 self.requires
                     .as_ref()
-                    .map(|v| style_default(&v.join(", ")))
-                    .unwrap_or(style_none())
+                    .map_or(style_none(), |v| style_default(&v.join(", ")))
             ),
             (KEY_PROMPT, self.prompt.clone()),
             (KEY_STEPS, self.actions.join(", ")),
         ];
 
         // notes
-        if !self.notes.is_empty() {
-            for (key, value) in vec_multiline_split(KEY_NOTES, &self.notes) {
-                lines.push((key, Box::new(value.to_string())));
-            }
-        } else {
+        let formatted_notes = if self.notes.is_empty() {
+            // add the default formatting for empty notes to our lines and move on...
             lines.push((KEY_NOTES, Box::new(style_none())));
+            Vec::new()
+        } else {
+            vec_multiline_split(KEY_NOTES, &self.notes)
+        };
+
+        for (key, value) in &formatted_notes {
+            lines.push((key, Box::new(value.to_string())));
         }
 
         writeln!(f, "{}", lines.pad_align_default())

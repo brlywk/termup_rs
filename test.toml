@@ -4,7 +4,7 @@ version = "0.0.1"
 
 [setup]
 pre = ["check_system_ready", "create_temp_dir"]
-main = ["install_casks"]
+main = ["install_casks", "write_test_file"]
 post = ["init_rust", "install_node"]
 
 [[action]]
@@ -24,7 +24,7 @@ args = ["-p", "/tmp/setup-test"]
 name = "Install Homebrew Casks"
 id = "install_casks"
 cmd = "echo"
-args = ["a", "b", "c", "def", "ghi", "jkl"]
+args = ["cask1", "cask2", "cask3", "cask4"]
 multi_run = true
 
 [[action]]
@@ -82,6 +82,24 @@ id = "compile_tool"
 cmd = "echo"
 args = ["Compiling custom tool"]
 working_dir = "/tmp/setup-test"
+
+[[action]]
+name = "Write test file"
+id = "write_test_file"
+cmd = "tee"
+args = ["test_file.txt"]
+requires_dir = "/tmp/setup-test"
+working_dir = "/tmp/setup-test"
+content = '''
+[init]
+    defaultBranch = "main"
+[user]
+    name = "me"
+    email = "my_email"
+[alias]
+    out = !git add . && git commit --amend -a --no-edit && git push --force-with-lease
+    pure = pull --rebase
+'''
 
 [[workflow]]
 id = "setup_some_compiler"

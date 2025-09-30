@@ -39,16 +39,16 @@ impl Display for Config {
         // actions
         if !self.actions.is_empty() {
             writeln!(f, "{}", "Actions".blue())?;
-            for s in self.actions.iter() {
-                writeln!(f, "{}", s)?;
+            for s in &self.actions {
+                writeln!(f, "{s}")?;
             }
         }
 
         // workflows
         if !self.workflows.is_empty() {
             writeln!(f, "{}", "Manual Workflows".blue())?;
-            for p in self.workflows.iter() {
-                writeln!(f, "{}", p)?;
+            for p in &self.workflows {
+                writeln!(f, "{p}")?;
             }
         }
 

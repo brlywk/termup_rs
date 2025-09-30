@@ -19,6 +19,7 @@ pub const KEY_DESCRIPTION: &str = "Descripton:";
 pub const KEY_NOTES: &str = "Notes:";
 pub const KEY_PROMPT: &str = "Prompt:";
 pub const KEY_STEPS: &str = "Steps:";
+pub const KEY_CONTENT: &str = "File Content:";
 
 // Default styling
 
@@ -37,10 +38,10 @@ pub fn style_default(s: &str) -> ColoredString {
 /// # Example
 /// Turns `["one", "two", "three"]` with key "KEY" into:
 /// `[("KEY", "one"), ("", "two"), ("", "three")]`
-pub fn vec_multiline_split<'a>(key: &'a str, vec: &'a [String]) -> Vec<(&'a str, &'a str)> {
+pub fn vec_multiline_split(key: &str, vec: &[String]) -> Vec<(String, String)> {
     if let Some((first, rest)) = vec.split_first() {
-        let first_line = std::iter::once((key, first.as_str()));
-        let rest_lines = rest.iter().map(|line| ("", line.as_str()));
+        let first_line = std::iter::once((key.to_string(), first.clone()));
+        let rest_lines = rest.iter().map(|line| (String::new(), line.clone()));
 
         first_line.chain(rest_lines).collect()
     } else {

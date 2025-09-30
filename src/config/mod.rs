@@ -1,8 +1,8 @@
 mod action;
-mod config;
+mod config_type;
 mod constants;
 mod info;
 mod setup;
 mod workflow;
 
-pub use self::{action::*, config::*, constants::*, info::*, setup::*, workflow::*};
+pub use self::{action::*, config_type::*, constants::*};

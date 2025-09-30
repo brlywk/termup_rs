@@ -2,7 +2,11 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{config::constants::*, pretty_list, print::PadAlign};
+use crate::{
+    config::{KEY_MAIN, KEY_POST, KEY_PRE},
+    pretty_list,
+    print::PadAlign,
+};
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct Setup {
