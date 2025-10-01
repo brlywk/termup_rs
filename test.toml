@@ -12,7 +12,6 @@ name = "Check system readiness"
 id = "check_system_ready"
 cmd = "echo"
 args = ["System check complete - ready for setup"]
-condition = "test -d /usr/local"
 
 [[action]]
 name = "Create temp directory"
@@ -26,6 +25,7 @@ id = "install_casks"
 cmd = "echo"
 args = ["cask1", "cask2", "cask3", "cask4"]
 multi_run = true
+requires = ["brew"]
 
 [[action]]
 name = "Initialize Rust toolchain"
@@ -39,7 +39,6 @@ name = "Install Node via NVM"
 id = "install_node"
 cmd = "echo"
 args = ["nvm install node"]
-requires = ["nvm"]
 requires_files = ["~/.nvm/nvm.sh"]
 
 [[action]]

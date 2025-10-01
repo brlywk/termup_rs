@@ -4,19 +4,19 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::{bail, Context};
+use anyhow::{Context, Result, bail};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     config::{
-        style_default, style_none, vec_multiline_split, KEY_ARGS, KEY_CMD, KEY_COND, KEY_CONTENT,
-        KEY_ID, KEY_MULTI_RUN, KEY_NAME, KEY_REQUIRES, KEY_REQUIRES_DIR, KEY_REQUIRES_FILES,
-        KEY_WORKING_DIR,
+        KEY_ARGS, KEY_CMD, KEY_CONTENT, KEY_ID, KEY_MULTI_RUN, KEY_NAME, KEY_REQUIRES,
+        KEY_REQUIRES_DIR, KEY_REQUIRES_FILES, KEY_WORKING_DIR, style_default, style_none,
+        vec_multiline_split,
     },
     execute::Executable,
     pretty_list,
-    print::{styled_option, PadAlign},
+    print::{PadAlign, styled_option},
 };
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -31,8 +31,6 @@ pub struct Action {
     pub working_dir: Option<String>,
     #[serde(default)]
     pub multi_run: Option<bool>,
-    #[serde(default)]
-    pub condition: Option<String>,
     #[serde(default)]
     pub requires: Option<Vec<String>>,
     #[serde(default)]
@@ -61,10 +59,6 @@ impl Display for Action {
                 } else {
                     "No"
                 }
-            ),
-            (
-                KEY_COND,
-                styled_option(self.condition.clone(), style_default, style_none)
             ),
             (
                 KEY_REQUIRES,
@@ -107,31 +101,12 @@ impl Executable for Action {
     fn execute(&self) -> anyhow::Result<()> {
         println!("[{}] {}:", "Running Action".bright_cyan(), self.name.bold());
 
+        // we also need to check some potential requirements
         // TODO:
-        // - Besides a pre-condition, be also need to check `required`, `required_fils` and
-        //   `required_dir` before doing anything
         // - Should `required` attempt any installation? should that be configurable via a flag?
-
-        // before executing anything, we need to check if there are any pre-conditions
-        // that need to be fulfilled
-        if let Some(cond) = &self.condition {
-            let mut cond_cmd = Command::new("sh");
-            cond_cmd.arg("-c").arg(cond);
-
-            // silence the pre-condition check (no output)
-            cond_cmd.stdout(Stdio::null());
-            cond_cmd.stderr(Stdio::null());
-
-            let cond_status = cond_cmd
-                .spawn()
-                .with_context(|| format!("failed to spawn pre-condition check: {cond}"))?
-                .wait()
-                .with_context(|| "failed to wait for pre-condition check to finish")?;
-
-            if !cond_status.success() {
-                bail!("pre-condition check failed: {cond}")
-            }
-        }
+        check_required_commands(self.requires.as_ref())?;
+        check_required_files(self.requires_files.as_ref())?;
+        check_required_dir(self.requires_dir.as_ref())?;
 
         // collect and prepare all commands to actually run:
         // when multi_run is set to true, every arg should spawn it's own command
@@ -176,13 +151,16 @@ impl Executable for Action {
                 .spawn()
                 .with_context(|| format!("failed to spawn command: {cmd_str}"))?;
 
-            if let Some(content) = &self.content && let Some(mut stdin) = child.stdin.take() {
-                    let cont = content.clone();
-                    std::thread::spawn(move || {
-                        stdin
-                            .write_all(cont.as_bytes())
-                            .expect("failed to write to stdin");
-                    });
+            if let Some(content) = &self.content
+                && let Some(mut stdin) = child.stdin.take()
+            {
+                let cont = content.clone();
+                let handle = std::thread::spawn(move || stdin.write_all(cont.as_bytes()));
+
+                handle
+                    .join()
+                    .unwrap()
+                    .with_context(|| "failed to write to stdin")?;
             }
 
             // run cmd, run!
@@ -191,7 +169,11 @@ impl Executable for Action {
                 .with_context(|| "failed to wait for command to finish")?;
 
             if status.success() {
-                println!("\n{} {}", "\u{2713}".bright_green().bold(), "Done".bright_green().bold());
+                println!(
+                    "\n{} {}",
+                    "\u{2713}".bright_green().bold(),
+                    "Done".bright_green().bold()
+                );
             } else {
                 bail!("Action '{}' failed with status: {}", &self.name, status)
             }
@@ -201,4 +183,116 @@ impl Executable for Action {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ExecutionMode {
+    Direct,
+    Subshell,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy)]
+enum OutputMode {
+    Inherit,
+    Mute,
+}
+
+fn run_shell_command(
+    command: &str,
+    args: &[&str],
+    mode: ExecutionMode,
+    output: OutputMode,
+    working_dir: Option<&str>,
+) -> Result<()> {
+    let mut cmd = match mode {
+        ExecutionMode::Subshell => {
+            let sub_cmd = format!("{} {}", command, args.join(" "));
+            let mut c = Command::new("sh");
+            c.arg("-c").arg(sub_cmd);
+            c
+        }
+        ExecutionMode::Direct => {
+            let mut c = Command::new(command);
+            c.args(args);
+            c
+        }
+    };
+
+    let mute = matches!(output, OutputMode::Mute);
+    cmd.stdout(if mute { Stdio::null() } else { Stdio::piped() });
+    cmd.stderr(if mute { Stdio::null() } else { Stdio::piped() });
+
+    if let Some(work_dir) = working_dir {
+        cmd.current_dir(work_dir);
+    }
+
+    let printable_cmd = format!("{} {}", command, args.join(" "));
+
+    let cmd_status = cmd
+        .spawn()
+        .with_context(|| format!("failed to spawn command: {printable_cmd}"))?
+        .wait()
+        .with_context(|| format!("failed to wait for command: {printable_cmd}"))?;
+
+    if !cmd_status.success() {
+        bail!("command failed: {printable_cmd}")
+    }
+
+    Ok(())
+}
+
+fn check_required_commands(required_commands: Option<&Vec<String>>) -> Result<()> {
+    let Some(commands) = required_commands else {
+        return Ok(());
+    };
+
+    for cmd in commands {
+        run_shell_command(
+            "command",
+            &["-v", cmd],
+            ExecutionMode::Direct,
+            OutputMode::Mute,
+            None,
+        )
+        .with_context(|| format!("command '{cmd}' not found"))?;
+    }
+
+    Ok(())
+}
+
+fn check_required_files(required_files: Option<&Vec<String>>) -> Result<()> {
+    let Some(files) = required_files else {
+        return Ok(());
+    };
+
+    for file in files {
+        run_shell_command(
+            "test",
+            &["-f", file],
+            ExecutionMode::Subshell,
+            OutputMode::Mute,
+            None,
+        )
+        .with_context(|| format!("required file not found: {file}"))?;
+    }
+
+    Ok(())
+}
+
+fn check_required_dir(required_dir: Option<&String>) -> Result<()> {
+    let Some(dir) = required_dir else {
+        return Ok(());
+    };
+
+    run_shell_command(
+        "test",
+        &["-d", dir],
+        ExecutionMode::Subshell,
+        OutputMode::Mute,
+        None,
+    )
+    .with_context(|| format!("required directory not found: {dir}"))?;
+
+    Ok(())
 }
