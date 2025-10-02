@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use colored::{ColoredString, Colorize};
+use colored::ColoredString;
 
 pub const DEFAULT_PADDING: usize = 10;
 pub const SEPARATOR_COUNT: usize = 60;
@@ -37,9 +37,16 @@ pub trait PadAlign {
     fn pad_align_default(&self) -> String;
 }
 
-impl PadAlign for [(&str, Box<dyn Display>)] {
+impl<T> PadAlign for [(T, Box<dyn Display>)]
+where
+    T: Display + AsRef<str>,
+{
     fn pad_align(&self, padding: usize) -> String {
-        let left_max = self.iter().map(|(lhs, _)| lhs.len()).max().unwrap_or(0);
+        let left_max = self
+            .iter()
+            .map(|(lhs, _)| lhs.as_ref().len())
+            .max()
+            .unwrap_or(0);
 
         self.iter()
             .map(|(lhs, rhs)| {
@@ -52,14 +59,6 @@ impl PadAlign for [(&str, Box<dyn Display>)] {
 
     fn pad_align_default(&self) -> String {
         self.pad_align(DEFAULT_PADDING)
-    }
-}
-
-/// Stringifies an `Option<T>`, representing `None` as the string `"None"`.
-pub fn string_option<T: Display>(opt: Option<T>) -> String {
-    match opt {
-        Some(display_value) => display_value.to_string(),
-        None => "None".to_string(),
     }
 }
 

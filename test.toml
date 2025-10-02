@@ -104,7 +104,7 @@ content = '''
 id = "setup_some_compiler"
 name = "Setup Some Compiler"
 description = "Install and configure some compiler toolchain"
-requires = ["git", "llvm"]
+requires = ["git", "clangd"]
 notes = [
   "Ensure LLVM paths are configured in your shell:",
   "export PATH=\"/usr/local/opt/llvm/bin:$PATH\"",

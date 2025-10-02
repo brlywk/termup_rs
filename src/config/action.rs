@@ -101,9 +101,10 @@ impl Executable for Action {
     fn execute(&self) -> anyhow::Result<()> {
         println!("[{}] {}:", "Running Action".bright_cyan(), self.name.bold());
 
-        // we also need to check some potential requirements
         // TODO:
         // - Should `required` attempt any installation? should that be configurable via a flag?
+
+        // we also need to check some potential requirements
         check_required_commands(self.requires.as_ref())?;
         check_required_files(self.requires_files.as_ref())?;
         check_required_dir(self.requires_dir.as_ref())?;
@@ -198,6 +199,12 @@ enum OutputMode {
     Mute,
 }
 
+/// Run the given `command` with arguments `args`. `mode` determines whether the `command`
+/// is run directly or in a subshell (`sh -c`) to enable shell substitutions (e.g. `~/`
+/// for the users home directory).
+///
+/// `output` can be set to redirect the output of the `command` to the parents pipe, or
+/// mute the output.
 fn run_shell_command(
     command: &str,
     args: &[&str],
@@ -236,13 +243,15 @@ fn run_shell_command(
         .with_context(|| format!("failed to wait for command: {printable_cmd}"))?;
 
     if !cmd_status.success() {
-        bail!("command failed: {printable_cmd}")
+        bail!("failed: {printable_cmd}")
     }
 
     Ok(())
 }
 
-fn check_required_commands(required_commands: Option<&Vec<String>>) -> Result<()> {
+/// Checks if all `required_commands` (read: programs, apps) are actually available.
+/// Fails for the first command not found.
+pub fn check_required_commands(required_commands: Option<&Vec<String>>) -> Result<()> {
     let Some(commands) = required_commands else {
         return Ok(());
     };

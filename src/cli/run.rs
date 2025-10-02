@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use crate::{
     config::{Action, Config},
     execute::Executable,
-    print::{print_header, SEPARATOR_COUNT, SEPARATOR_DASH},
+    print::{SEPARATOR_COUNT, SEPARATOR_DASH, print_header},
 };
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use colored::Colorize;
 
 pub fn run_command_run(config: &Config) -> Result<()> {
@@ -27,24 +27,31 @@ pub fn run_command_run(config: &Config) -> Result<()> {
         .collect();
 
     // run setup block: pre, main and post actions
-    run_actions("Pre-Setup steps", &config.setup.pre, &action_map)?;
-    run_actions("Main Setup steps", &config.setup.main, &action_map)?;
-    run_actions("Post-Setup steps", &config.setup.post, &action_map)?;
+    print_header(
+        "Pre-Setup steps",
+        |b| b.yellow().reversed(),
+        |t| t.yellow().bold().reversed(),
+    );
+    run_actions(&config.setup.pre, &action_map)?;
+
+    print_header(
+        "Main Setup steps",
+        |b| b.yellow().reversed(),
+        |t| t.yellow().bold().reversed(),
+    );
+    run_actions(&config.setup.main, &action_map)?;
+
+    print_header(
+        "Post-Setup steps",
+        |b| b.yellow().reversed(),
+        |t| t.yellow().bold().reversed(),
+    );
+    run_actions(&config.setup.post, &action_map)?;
 
     Ok(())
 }
 
-fn run_actions(
-    header_text: &str,
-    actions: &[String],
-    action_map: &HashMap<&str, &Action>,
-) -> Result<()> {
-    print_header(
-        header_text,
-        |b| b.yellow().reversed(),
-        |t| t.yellow().bold().reversed(),
-    );
-
+pub fn run_actions(actions: &[String], action_map: &HashMap<&str, &Action>) -> Result<()> {
     let mut actions_iter = actions.iter().peekable();
 
     while let Some(action_id) = actions_iter.next() {

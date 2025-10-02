@@ -5,4 +5,4 @@ mod info;
 mod setup;
 mod workflow;
 
-pub use self::{action::*, config_type::*, constants::*};
+pub use self::{action::*, config_type::*, constants::*, workflow::*};

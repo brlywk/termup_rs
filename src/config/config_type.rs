@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::{action::Action, info::Info, setup::Setup, workflow::Workflow};
 
-// TODO: Change this to the new structure otherwise this will super break!
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub info: Info,

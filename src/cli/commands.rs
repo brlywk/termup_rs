@@ -26,7 +26,10 @@ pub enum Commands {
     /// Run terminal setup
     Run,
     /// Run a manual workflow
-    Workflow,
+    Workflow {
+        #[arg(short = 'w', long = "workflow-id", help = "ID of the workflow to run")]
+        workflow_id: Option<String>,
+    },
     /// Pretty-print loaded config file
     Config,
 }
