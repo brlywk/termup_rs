@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/username/termup/main/schema.json",
+  "title": "Termup Configuration",
+  "description": "Schema for termup terminal setup configuration files",
+  "type": "object",
+  "properties": {
+    "info": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the setup configuration" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+      },
+      "required": ["name", "version"]
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "pre": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to run before main setup" },
+        "main": { "type": "array", "items": { "type": "string" }, "description": "Main setup action IDs" },
+        "post": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to run after main setup" }
+      }
+    },
+    "action": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Human-readable action name" },
+          "id": { "type": "string", "description": "Unique action identifier" },
+          "cmd": { "type": "string", "description": "Command to execute" },
+          "args": { "type": "array", "items": { "type": "string" }, "description": "Command arguments" },
+          "multi_run": {
+            "type": "boolean",
+            "default": false,
+            "description": "Run command once per argument"
+          },
+          "requires": { "type": "array", "items": { "type": "string" }, "description": "Required commands in PATH" },
+          "requires_files": { "type": "array", "items": { "type": "string" }, "description": "Required file paths" },
+          "requires_dir": { "type": "string", "description": "Required directory path" },
+          "working_dir": { "type": "string", "description": "Working directory for command execution" },
+          "content": { "type": "string", "description": "Content to pipe to command" }
+        },
+        "required": ["name", "id", "cmd", "args"]
+      }
+    },
+    "workflow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Unique workflow identifier" },
+          "name": { "type": "string", "description": "Human-readable workflow name" },
+          "description": { "type": "string", "description": "Workflow description" },
+          "requires": { "type": "array", "items": { "type": "string" }, "description": "Required commands" },
+          "notes": { "type": "array", "items": { "type": "string" }, "description": "Important notes for user" },
+          "prompt": { "type": "string", "description": "Confirmation prompt before execution" },
+          "actions": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to execute" }
+        },
+        "required": ["id", "name", "actions", "notes", "prompt"]
+      }
+    }
+  },
+  "required": ["info", "setup", "action"]
+}

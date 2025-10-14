@@ -7,6 +7,7 @@ pub const SEPARATOR_COUNT: usize = 60;
 pub const SEPARATOR_DASH: &str = "─";
 pub const SEPARATOR_SPACE: &str = " ";
 
+// TODO: Update example, the trait has changed a bit since it was first written ;)
 pub trait PadAlign {
     /// Align all string tuples in `lines` with a minimum of `padding` between them.
     ///

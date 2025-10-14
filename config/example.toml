@@ -1,3 +1,4 @@
+#:schema https://raw.githubusercontent.com/brlywk/termup_rs/main/schema.json
 [info]
 name = "Test Development Setup"
 version = "0.0.1"
@@ -96,7 +97,7 @@ content = '''
     name = "me"
     email = "my_email"
 [alias]
-    out = !git add . && git commit --amend -a --no-edit && git push --force-with-lease
+    out = !git add . && git commit --amend --no-edit && git push --force-with-lease
     pure = pull --rebase
 '''
 

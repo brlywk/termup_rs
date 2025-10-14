@@ -228,7 +228,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "termup_rs"
+name = "termup"
 version = "0.1.0"
 dependencies = [
  "anyhow",

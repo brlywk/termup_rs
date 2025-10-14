@@ -1,7 +1,9 @@
 [package]
-name = "termup_rs"
+name = "termup"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+license-file = "LICENSE"
 
 [dependencies]
 anyhow = "1.0.100"
