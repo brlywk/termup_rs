@@ -118,7 +118,7 @@ actions = ["build_project", "compile_tool"]
 id = "configure_dev_env"
 name = "Configure Development Environment"
 description = "Set up IDE and development tools"
-requires = ["neovim"]
+requires = ["nvim"]
 notes = [
   "This will configure your development environment",
   "Make sure your config files are in place",
