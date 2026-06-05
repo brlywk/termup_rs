@@ -1,65 +1,188 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/username/termup/main/schema.json",
-  "title": "Termup Configuration",
-  "description": "Schema for termup terminal setup configuration files",
-  "type": "object",
-  "properties": {
-    "info": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "description": "Name of the setup configuration" },
-        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
-      },
-      "required": ["name", "version"]
-    },
-    "setup": {
-      "type": "object",
-      "properties": {
-        "pre": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to run before main setup" },
-        "main": { "type": "array", "items": { "type": "string" }, "description": "Main setup action IDs" },
-        "post": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to run after main setup" }
-      }
-    },
-    "action": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string", "description": "Human-readable action name" },
-          "id": { "type": "string", "description": "Unique action identifier" },
-          "cmd": { "type": "string", "description": "Command to execute" },
-          "args": { "type": "array", "items": { "type": "string" }, "description": "Command arguments" },
-          "multi_run": {
-            "type": "boolean",
-            "default": false,
-            "description": "Run command once per argument"
-          },
-          "requires": { "type": "array", "items": { "type": "string" }, "description": "Required commands in PATH" },
-          "requires_files": { "type": "array", "items": { "type": "string" }, "description": "Required file paths" },
-          "requires_dir": { "type": "string", "description": "Required directory path" },
-          "working_dir": { "type": "string", "description": "Working directory for command execution" },
-          "content": { "type": "string", "description": "Content to pipe to command" }
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Termup Configuration Schema",
+    "description": "Schema for terminal setup configuration files",
+    "type": "object",
+    "required": [
+        "info",
+        "setup",
+        "action"
+    ],
+    "properties": {
+        "info": {
+            "type": "object",
+            "description": "Metadata about the setup configuration",
+            "required": [
+                "name",
+                "version"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of this setup configuration"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "The version of this setup configuration"
+                }
+            },
+            "additionalProperties": false
         },
-        "required": ["name", "id", "cmd", "args"]
-      }
-    },
-    "workflow": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string", "description": "Unique workflow identifier" },
-          "name": { "type": "string", "description": "Human-readable workflow name" },
-          "description": { "type": "string", "description": "Workflow description" },
-          "requires": { "type": "array", "items": { "type": "string" }, "description": "Required commands" },
-          "notes": { "type": "array", "items": { "type": "string" }, "description": "Important notes for user" },
-          "prompt": { "type": "string", "description": "Confirmation prompt before execution" },
-          "actions": { "type": "array", "items": { "type": "string" }, "description": "Action IDs to execute" }
+        "setup": {
+            "type": "object",
+            "description": "Definition of setup execution order",
+            "required": [
+                "main"
+            ],
+            "properties": {
+                "pre": {
+                    "type": "array",
+                    "description": "Actions to run before main setup",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                },
+                "main": {
+                    "type": "array",
+                    "description": "Main setup actions",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                },
+                "post": {
+                    "type": "array",
+                    "description": "Actions to run after main setup",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                }
+            },
+            "additionalProperties": false
         },
-        "required": ["id", "name", "actions", "notes", "prompt"]
-      }
-    }
-  },
-  "required": ["info", "setup", "action"]
+        "action": {
+            "type": "array",
+            "description": "List of executable actions",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "id",
+                    "cmd",
+                    "args"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable action name"
+                    },
+                    "id": {
+                        "type": "string",
+                        "description": "Unique action identifier"
+                    },
+                    "cmd": {
+                        "type": "string",
+                        "description": "Command executable to run"
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "Base arguments passed to the command",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Optional list of values appended one-by-one to args. If present and non-empty, the command is executed once per item.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "working_dir": {
+                        "type": "string",
+                        "description": "Working directory to run the command in"
+                    },
+                    "requires": {
+                        "type": "array",
+                        "description": "Commands that must exist before this action can run",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "requires_files": {
+                        "type": "array",
+                        "description": "Files that must exist before this action can run",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "requires_dir": {
+                        "type": "string",
+                        "description": "Directory that must exist before this action can run"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Optional content written to stdin of the command"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "workflow": {
+            "type": "array",
+            "description": "List of reusable workflows",
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "actions"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique workflow identifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable workflow name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional workflow description"
+                    },
+                    "requires": {
+                        "type": "array",
+                        "description": "Commands that must exist before this workflow can run",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "notes": {
+                        "type": "array",
+                        "description": "Notes shown to the user before running the workflow",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "description": "Optional confirmation prompt shown before running the workflow"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "description": "Action IDs executed by this workflow",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
 }

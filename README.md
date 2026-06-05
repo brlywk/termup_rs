@@ -11,7 +11,7 @@ Automate your terminal and development environment setup with simple TOML config
 - 📝 **Simple TOML config** - Easy to read and write
 - 🔄 **Reproducible environments** - Same setup across machines
 - 🎯 **Workflow support** - Semi-manual steps with prompts and notes
-- ✅ **Dependency checking** - Verify required commands and files exist
+- ✅ **Dependency checking** - Verify required commands, files, and directories exist
 
 ## Installation
 
@@ -119,11 +119,11 @@ termup config -c example.toml
 
 Termup uses a toml file to specify all setup steps that should be taken.
 
-A config file consists of four sections:
-- `info` object containing general information about the config
-- `setup` object containing the pre-, main- and post-setup actions to run
-- `action` array containing the atomic steps used to define the setup and workflows
-- `workflow` array containing custom, semi-manual workflows to run
+A config file consists of up to four sections:
+-  `info` object containing general information about the config
+-  `setup` object containing the pre-, main- and post-setup actions to run
+-  `action` array containing the atomic steps used to define the setup and workflows
+-  `workflow` array containing custom, semi-manual workflows to run
 
 Following is an overview of how each section is structured:
 
@@ -149,6 +149,8 @@ version = "0.0.1" # So you can distinguish between configs if you'd like
 
 #### `setup`
 
+`main` is required. `pre` and `post` are optional.
+
 ```toml
 [setup]
 pre = ["actions_to_run", "as_prerequisites"]
@@ -168,9 +170,8 @@ name = "Human readable name"
 id = "random-string_id"
 cmd = "command_to_run"
 args = ["some", "number", "of", "args"]
+items = ["optional", "values", "to", "append", "per", "run"]
 working_dir = "/dir/to/run/cmd/in"
-# If multi_run = true, runs cmd once per arg. If false, runs cmd once with all args
-multi_run = true 
 requires = ["cmd_that_should_already_exist"]
 requires_files = ["files", "that", "should", "exist"]
 requires_dir = "dir/that/should/exist"
@@ -179,6 +180,31 @@ Some content to provide as stdin for
 the command to run...
 '''
 ```
+
+`args` are the base arguments passed to the command.
+
+If `items` is omitted or empty, the command is run once with `args`.
+
+If `items` is provided and non-empty, the command is run once per item, appending that item to `args`.
+
+For example:
+
+```toml
+[[action]]
+name = "Install Homebrew packages"
+id = "homebrew_packages"
+cmd = "brew"
+args = ["install"]
+items = ["bat", "fd", "ripgrep"]
+```
+
+This runs:
+```
+brew install bat
+brew install fd
+brew install ripgrep
+```
+
 
 #### `workflow`
 

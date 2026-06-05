@@ -24,8 +24,8 @@ args = ["-p", "/tmp/setup-test"]
 name = "Install Homebrew Casks"
 id = "install_casks"
 cmd = "echo"
-args = ["cask1", "cask2", "cask3", "cask4"]
-multi_run = true
+args = ["install", "--cask"]
+items = ["cask1", "cask2", "cask3", "cask4"]
 requires = ["brew"]
 
 [[action]]
@@ -54,8 +54,8 @@ requires_files = ["~/.config/bat/config"]
 name = "Install essential tools"
 id = "install_tools"
 cmd = "echo"
-args = ["git", "neovim", "bat", "rustup"]
-multi_run = true
+args = ["install"]
+items = ["git", "neovim", "bat", "rustup"]
 
 [[action]]
 name = "Clone Git repo"

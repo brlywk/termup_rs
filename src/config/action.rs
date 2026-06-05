@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::{
-        KEY_ARGS, KEY_CMD, KEY_CONTENT, KEY_ID, KEY_MULTI_RUN, KEY_NAME, KEY_REQUIRES,
-        KEY_REQUIRES_DIR, KEY_REQUIRES_FILES, KEY_WORKING_DIR, style_default, style_none,
-        vec_multiline_split,
+        KEY_ARGS, KEY_CMD, KEY_CONTENT, KEY_ID, KEY_MULTI_RUN, KEY_MULTI_RUN_ITEMS, KEY_NAME,
+        KEY_REQUIRES, KEY_REQUIRES_DIR, KEY_REQUIRES_FILES, KEY_WORKING_DIR, style_default,
+        style_none, vec_multiline_split,
     },
     execute::Executable,
     pretty_list,
@@ -30,8 +30,6 @@ pub struct Action {
     #[serde(default)]
     pub working_dir: Option<String>,
     #[serde(default)]
-    pub multi_run: Option<bool>,
-    #[serde(default)]
     pub requires: Option<Vec<String>>,
     #[serde(default)]
     pub requires_files: Option<Vec<String>>,
@@ -39,6 +37,8 @@ pub struct Action {
     pub requires_dir: Option<String>,
     #[serde(default)]
     pub content: Option<String>,
+    #[serde(default)]
+    pub items: Option<Vec<String>>,
 }
 
 impl Display for Action {
@@ -54,11 +54,17 @@ impl Display for Action {
             ),
             (
                 KEY_MULTI_RUN,
-                if let Some(true) = self.multi_run {
+                if self.items.as_ref().is_some() {
                     "Yes"
                 } else {
                     "No"
                 }
+            ),
+            (
+                KEY_MULTI_RUN_ITEMS,
+                self.items
+                    .as_ref()
+                    .map_or(style_none(), |v| style_default(&v.join(", ")))
             ),
             (
                 KEY_REQUIRES,
@@ -90,7 +96,7 @@ impl Display for Action {
         }
 
         for (key, value) in &formatted_content {
-            lines.push((key, Box::new(value.to_string())));
+            lines.push((key, Box::new(value.clone())));
         }
 
         writeln!(f, "{}", lines.pad_align_default())
@@ -110,14 +116,17 @@ impl Executable for Action {
         check_required_dir(self.requires_dir.as_ref())?;
 
         // collect and prepare all commands to actually run:
-        // when multi_run is set to true, every arg should spawn it's own command
-        let cmds_to_run: Vec<(String, Vec<String>)> = if self.multi_run.unwrap_or(false) {
-            self.args
+        // if any items are present, we want to run `cmd` with `args` for each item
+        let cmds_to_run: Vec<(String, Vec<String>)> = match &self.items {
+            Some(items) if !items.is_empty() => items
                 .iter()
-                .map(|arg| (self.cmd.clone(), vec![arg.clone()]))
-                .collect()
-        } else {
-            vec![(self.cmd.clone(), self.args.clone())]
+                .map(|item| {
+                    let mut args = self.args.clone();
+                    args.push(item.clone());
+                    (self.cmd.clone(), args)
+                })
+                .collect(),
+            _ => vec![(self.cmd.clone(), self.args.clone())],
         };
 
         // execute each command
